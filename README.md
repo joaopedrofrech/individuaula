@@ -51,51 +51,152 @@ Cloudflare D1
 
 Rotas de API: `POST /api/auth/register|login|logout`, `GET /api/auth/session`, `GET|PATCH /api/auth/profile`, `GET /api/data`, `POST /api/demo-data`, `POST /api/disciplines`, `PATCH|DELETE /api/disciplines/[id]` (o mesmo para `notes` e `assessments`) e `GET /api/youtube/search`.
 
-## persistência atual e evolução planejada
+## banco de dados
 
-### persistência atual: Cloudflare D1 com Drizzle ORM
+Todos os dados do sistema ficam no **Cloudflare D1** (SQLite gerenciado), acessado pelo **Drizzle ORM**. O navegador não guarda nada: sem `localStorage`, tudo vive no banco.
 
-Contas, sessões e todos os dados acadêmicos ficam no banco **D1**. O navegador não guarda nada (sem `localStorage`): ele mantém só uma cópia em memória para a tela responder na hora, e cada alteração é gravada no banco por uma fila ordenada. Se uma gravação falhar, o aluno é avisado e a tela volta ao que está salvo.
+### modelo de dados
 
-**Modelagem**
+```mermaid
+erDiagram
+    users ||--o{ sessions : "tem"
+    users ||--o{ disciplines : "possui"
+    users ||--o{ study_sessions : "registra"
+    disciplines ||--o{ notes : "contém"
+    disciplines ||--o{ assessments : "contém"
 
-```text
-users ──1:N── sessions
-users ──1:N── disciplines ──1:N── notes
-                          └─1:N── assessments
-users ──1:N── study_sessions
+    users {
+        text id PK
+        text name
+        text email UK
+        text password_hash
+        integer created_at
+        integer updated_at
+    }
+    sessions {
+        text id PK
+        text user_id FK
+        integer expires_at
+        integer created_at
+    }
+    disciplines {
+        text id PK
+        text user_id FK
+        text name
+        text description
+        text color
+        text icon
+        integer created_at
+        integer updated_at
+    }
+    notes {
+        text id PK
+        text user_id FK
+        text discipline_id FK
+        text title
+        text content
+        text image_data_url
+        integer created_at
+        integer updated_at
+    }
+    assessments {
+        text id PK
+        text user_id FK
+        text discipline_id FK
+        text title
+        real grade
+        real weight
+        integer created_at
+        integer updated_at
+    }
+    study_sessions {
+        text id PK
+        text user_id FK
+        integer date
+        integer minutes
+    }
 ```
 
-| tabela | o que guarda | pontos importantes |
-| --- | --- | --- |
-| `users` | nome, e-mail e hash da senha | e-mail único; senha só como hash PBKDF2 |
-| `sessions` | sessões de login (uma por aparelho) | guarda só o hash do token; validade de 7 dias |
-| `disciplines` | matérias do aluno | nome, descrição, cor e ícone |
-| `notes` | anotações de uma disciplina | conteúdo em HTML higienizado e imagem opcional |
-| `assessments` | provas e trabalhos | nota e peso, que alimentam a média ponderada |
-| `study_sessions` | minutos estudados por dia | alimenta o gráfico semanal |
+`PK` é a chave primária, `FK` a chave estrangeira e `UK` um valor único. As datas são guardadas em milissegundos.
 
-Todo registro acadêmico tem `user_id` do dono, e toda consulta filtra por ele: um aluno nunca enxerga os dados de outro. As chaves estrangeiras usam `ON DELETE CASCADE`, então excluir uma disciplina apaga suas anotações e avaliações sem deixar registros órfãos.
+| tabela | o que guarda |
+| --- | --- |
+| `users` | contas dos alunos: nome, e-mail único e hash da senha |
+| `sessions` | logins abertos (um por aparelho), com validade de 7 dias |
+| `disciplines` | matérias do aluno, com cor e ícone |
+| `notes` | anotações de uma disciplina (texto formatado e imagem opcional) |
+| `assessments` | provas e trabalhos, com nota e peso para a média ponderada |
+| `study_sessions` | minutos estudados por dia, que alimentam o gráfico semanal |
 
-**Onde está cada coisa**
+### decisões do modelo
+
+- **isolamento por aluno:** toda tabela acadêmica tem `user_id` do dono, e toda consulta filtra por ele. Um aluno nunca enxerga os dados de outro;
+- **exclusão em cascata:** as chaves estrangeiras usam `ON DELETE CASCADE`. Excluir uma disciplina apaga suas anotações e avaliações, e excluir uma conta apaga tudo dela, sem deixar registros órfãos;
+- **segredos só como hash:** a senha é guardada com PBKDF2 e sal individual, e a sessão guarda o hash do token. Um vazamento do banco não revela senhas nem permite assumir sessões;
+- **índices por aluno:** cada tabela tem um índice em `user_id` (e em `discipline_id` quando existe), porque é assim que as telas consultam.
+
+### onde está no código
 
 | arquivo | função |
 | --- | --- |
-| `db/schema.ts` | definição das tabelas em TypeScript (fonte da verdade do modelo) |
-| `drizzle/*.sql` | migrações SQL geradas a partir do schema, versionadas no git |
-| `drizzle.config.ts` | configuração do Drizzle Kit |
-| `server/db.ts` | conecta o binding `DB` do D1 ao Drizzle |
-| `server/auth-service.ts` | contas, login e sessões |
-| `server/study-data.ts` | consultas e gravações de disciplinas, anotações e avaliações |
-| `wrangler.jsonc` | declara o banco `individuaula-db` e o binding `DB` |
+| [`db/schema.ts`](db/schema.ts) | **definição das tabelas** em TypeScript, a fonte da verdade do modelo |
+| [`drizzle/`](drizzle) | migrações SQL geradas a partir do schema, versionadas no git |
+| [`drizzle.config.ts`](drizzle.config.ts) | configuração do Drizzle Kit |
+| [`server/db.ts`](server/db.ts) | liga o banco D1 (binding `DB`) ao Drizzle |
+| [`server/auth-service.ts`](server/auth-service.ts) | contas, login e sessões |
+| [`server/study-data.ts`](server/study-data.ts) | consultas e gravações de disciplinas, anotações e avaliações |
+| [`wrangler.jsonc`](wrangler.jsonc) | declara o banco `individuaula-db` e o binding `DB` |
 
-**Alterando o banco**
+Um trecho do `db/schema.ts`, com a tabela de disciplinas:
+
+```ts
+export const disciplines = sqliteTable(
+  "disciplines",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    description: text("description").notNull().default(""),
+    color: text("color").notNull(),
+    icon: text("icon").notNull().default("book"),
+    createdAt: timestamp("created_at").notNull(),
+    updatedAt: timestamp("updated_at").notNull(),
+  },
+  (table) => [index("disciplines_user_idx").on(table.userId)],
+);
+```
+
+### migrações
+
+| arquivo | o que faz |
+| --- | --- |
+| `drizzle/0000_blushing_matthew_murdock.sql` | cria as tabelas e os índices iniciais |
+| `drizzle/0001_remove_fluxo_de_email.sql` | remove a tabela e a coluna do fluxo de e-mail, retirado até haver domínio |
+
+Para alterar o banco:
 
 ```bash
 # 1. edite db/schema.ts
 pnpm db:generate          # gera a migração SQL em drizzle/
 pnpm db:migrate:local     # aplica no banco local (.wrangler/state, fora do git)
 pnpm db:migrate:remote    # aplica no D1 de produção
+```
+
+### como mostrar o banco funcionando
+
+No painel da Cloudflare: **Storage & databases → D1 → individuaula-db**. A aba **Tables** lista as tabelas e permite ver os registros.
+
+Ou pelo terminal, direto no banco de produção:
+
+```bash
+# lista as tabelas (d1_migrations é a tabela de controle das migrações, criada pelo wrangler)
+pnpm exec wrangler d1 execute DB --remote --command "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE '_cf_%' ORDER BY name"
+
+# mostra as contas sem expor a senha (só o início do hash)
+pnpm exec wrangler d1 execute DB --remote --command "SELECT name, email, substr(password_hash, 1, 16) AS hash FROM users"
+
+# conta os registros de cada aluno
+pnpm exec wrangler d1 execute DB --remote --command "SELECT u.email, (SELECT count(*) FROM disciplines d WHERE d.user_id = u.id) AS disciplinas FROM users u"
 ```
 
 ### evolução planejada
