@@ -15,6 +15,7 @@ const eslintConfig = defineConfig([
     // artefatos gerados pelo build da Cloudflare.
     ".open-next/**",
     ".wrangler/**",
+    "android/**",
     "coverage/**",
     "playwright-report/**",
   ]),

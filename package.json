@@ -13,6 +13,10 @@
     "test:coverage": "vitest run --coverage",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
+    "android:sync": "cap sync android",
+    "android:open": "cap open android",
+    "android:build": "cd android && ./gradlew assembleDebug",
+    "android:run": "cap run android",
     "preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
     "deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy",
     "db:generate": "drizzle-kit generate",
@@ -22,6 +26,8 @@
   },
   "dependencies": {
     "@base-ui/react": "^1.8.0",
+    "@capacitor/android": "^8.6.2",
+    "@capacitor/core": "^8.6.2",
     "class-variance-authority": "^0.7.1",
     "cn": "^0.3.0",
     "drizzle-orm": "^0.45.4",
@@ -36,6 +42,7 @@
     "zod": "^4.6.5"
   },
   "devDependencies": {
+    "@capacitor/cli": "^8.6.2",
     "@opennextjs/cloudflare": "^1.20.13",
     "@playwright/test": "^1.63.0",
     "@tailwindcss/postcss": "^4",

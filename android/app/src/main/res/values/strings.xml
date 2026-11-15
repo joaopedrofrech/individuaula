@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">IndividuAula</string>
+    <string name="title_activity_main">IndividuAula</string>
+    <string name="package_name">br.edu.aedb.individuaula</string>
+    <string name="custom_url_scheme">br.edu.aedb.individuaula</string>
+</resources>

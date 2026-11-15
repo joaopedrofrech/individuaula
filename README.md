@@ -239,6 +239,34 @@ pnpm preview               # roda o build de produção localmente
 pnpm exec wrangler secret put YOUTUBE_API_KEY   # ativa a busca real no YouTube
 ```
 
+## aplicativo Android
+
+O projeto Android usa Capacitor para reaproveitar a aplicação web dentro de um APK. Nesta primeira versão, o app carrega a aplicação publicada em `app.individuaula.workers.dev`, mantendo as rotas de API, a autenticação e o banco D1 no backend da Cloudflare. Por isso, o APK de demonstração precisa de conexão com a internet.
+
+Requisitos locais:
+
+- Node.js 22 ou superior;
+- Android Studio com Android SDK;
+- JDK 21;
+- um emulador ou dispositivo Android para testar.
+
+Comandos principais:
+
+```bash
+pnpm android:sync       # sincroniza os arquivos web e os plugins nativos
+pnpm android:open       # abre o projeto no Android Studio
+pnpm android:build      # gera android/app/build/outputs/apk/debug/app-debug.apk
+pnpm android:run        # instala e executa em um dispositivo conectado
+```
+
+Para testar outra URL do backend durante o desenvolvimento, use `CAP_SERVER_URL` antes de sincronizar:
+
+```bash
+CAP_SERVER_URL=https://app.individuaula.workers.dev pnpm android:sync
+```
+
+O login tradicional funciona nesta versão híbrida. A integração futura com Google deverá usar o fluxo nativo recomendado para Android, e não um login dentro de WebView.
+
 ## segurança
 
 - senhas com PBKDF2-SHA256 e sal individual, comparadas em tempo constante; o login de um e-mail inexistente gasta o mesmo tempo de um existente;
