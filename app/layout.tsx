@@ -8,6 +8,9 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 export const metadata: Metadata = {
   title: "IndividuAula · seu espaço de estudos",
   description: "Uma plataforma simples para organizar disciplinas, anotações e desempenho.",
+  icons: {
+    icon: "/icon.svg",
+  },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
