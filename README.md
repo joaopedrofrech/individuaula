@@ -241,7 +241,23 @@ pnpm exec wrangler secret put YOUTUBE_API_KEY   # ativa a busca real no YouTube
 
 ## aplicativo Android
 
-O projeto Android usa Capacitor para reaproveitar a aplicação web dentro de um APK. Nesta primeira versão, o app carrega a aplicação publicada em `app.individuaula.workers.dev`, mantendo as rotas de API, a autenticação e o banco D1 no backend da Cloudflare. Por isso, o APK de demonstração precisa de conexão com a internet.
+### resumo para apresentar
+
+O IndividuAula também possui uma versão Android em APK. Ela reaproveita a aplicação web dentro de um aplicativo nativo, mantendo a mesma interface, autenticação, rotas de API e dados do sistema web. Assim, o aluno pode acessar disciplinas, anotações, conteúdos e dashboard pelo celular.
+
+### tecnologias utilizadas
+
+- Next.js e React: aplicação web que compõe as telas e regras da interface;
+- Capacitor: camada que empacota a aplicação web em um aplicativo Android;
+- Java e Android SDK: recursos nativos, navegação, barras do sistema e comportamento do aplicativo;
+- Android Studio e Gradle: compilação, instalação e execução do APK;
+- Cloudflare Workers e D1: hospedagem da aplicação, rotas de API e persistência dos dados.
+
+### como o APK funciona
+
+O APK carrega a aplicação publicada em `app.individuaula.workers.dev`. A interface é apresentada no WebView do Android, enquanto o backend continua responsável pela autenticação, validações, regras de negócio e banco de dados. Por isso, a versão de demonstração precisa de conexão com a internet.
+
+Para explicar em uma frase: **o Capacitor transforma a aplicação web do IndividuAula em um app Android, sem duplicar o sistema e mantendo o mesmo backend seguro.**
 
 Requisitos locais:
 
