@@ -241,9 +241,7 @@ pnpm exec wrangler secret put YOUTUBE_API_KEY   # ativa a busca real no YouTube
 
 ## aplicativo Android
 
-### resumo para apresentar
-
-O IndividuAula também possui uma versão Android em APK. Ela reaproveita a aplicação web dentro de um aplicativo nativo, mantendo a mesma interface, autenticação, rotas de API e dados do sistema web. Assim, o aluno pode acessar disciplinas, anotações, conteúdos e dashboard pelo celular.
+O projeto possui uma versão Android em APK baseada na aplicação web do IndividuAula. A versão mobile mantém a mesma interface, autenticação, rotas de API e persistência de dados do sistema web.
 
 ### tecnologias utilizadas
 
@@ -253,11 +251,9 @@ O IndividuAula também possui uma versão Android em APK. Ela reaproveita a apli
 - Android Studio e Gradle: compilação, instalação e execução do APK;
 - Cloudflare Workers e D1: hospedagem da aplicação, rotas de API e persistência dos dados.
 
-### como o APK funciona
+### funcionamento
 
-O APK carrega a aplicação publicada em `app.individuaula.workers.dev`. A interface é apresentada no WebView do Android, enquanto o backend continua responsável pela autenticação, validações, regras de negócio e banco de dados. Por isso, a versão de demonstração precisa de conexão com a internet.
-
-Para explicar em uma frase: **o Capacitor transforma a aplicação web do IndividuAula em um app Android, sem duplicar o sistema e mantendo o mesmo backend seguro.**
+O APK carrega a aplicação publicada em `app.individuaula.workers.dev` dentro do WebView do Android. O backend continua responsável pela autenticação, validações, regras de negócio e persistência no banco D1. A versão publicada requer conexão com a internet.
 
 Requisitos locais:
 
@@ -272,7 +268,7 @@ Comandos principais:
 pnpm android:sync       # sincroniza os arquivos web e os plugins nativos
 pnpm android:open       # abre o projeto no Android Studio
 pnpm android:build      # gera android/app/build/outputs/apk/debug/app-debug.apk
-pnpm android:build:release # gera o APK de apresentação em modo release
+pnpm android:build:release # gera o APK em modo release
 pnpm android:run        # instala e executa em um dispositivo conectado
 ```
 
