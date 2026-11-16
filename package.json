@@ -16,6 +16,7 @@
     "android:sync": "cap sync android",
     "android:open": "cap open android",
     "android:build": "cd android && ./gradlew assembleDebug",
+    "android:build:release": "cd android && ./gradlew assembleRelease",
     "android:run": "cap run android",
     "preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
     "deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy",

@@ -256,6 +256,7 @@ Comandos principais:
 pnpm android:sync       # sincroniza os arquivos web e os plugins nativos
 pnpm android:open       # abre o projeto no Android Studio
 pnpm android:build      # gera android/app/build/outputs/apk/debug/app-debug.apk
+pnpm android:build:release # gera o APK de apresentação em modo release
 pnpm android:run        # instala e executa em um dispositivo conectado
 ```
 
@@ -266,6 +267,22 @@ CAP_SERVER_URL=https://app.individuaula.workers.dev pnpm android:sync
 ```
 
 O login tradicional funciona nesta versão híbrida. A integração futura com Google deverá usar o fluxo nativo recomendado para Android, e não um login dentro de WebView.
+
+### acabamento nativo
+
+- o launcher usa a marca `Au` em azul-marinho e amarelo, com versões para as densidades do Android;
+- a splash screen usa a identidade do IndividuAula e aparece em retrato e paisagem;
+- a barra de status e a barra de navegação usam o azul-marinho da marca, sem uma segunda barra de título nativa;
+- o botão voltar percorre a navegação web antes de encerrar o app;
+- links para domínios externos, como o YouTube, são enviados ao navegador do aparelho;
+- quando a aplicação publicada não pode ser alcançada, o APK mostra uma tela offline local com opção de tentar novamente;
+- `android:windowSoftInputMode="adjustResize"` mantém os formulários visíveis quando o teclado abre.
+
+O comando `android:build:release` usa a assinatura debug local como fallback para permitir a apresentação e a instalação imediatas. Para distribuição real, configure um keystore próprio em `android/keystore.properties`; os arquivos de chave são ignorados pelo git.
+
+### integrações externas
+
+Google Login, confirmação/recuperação por e-mail e Cloudflare Turnstile não são ativados automaticamente porque dependem de credenciais e domínios do ambiente final. O login tradicional e a proteção atual continuam funcionando sem essas chaves. Quando elas forem fornecidas, devem ser configuradas como secrets no Worker, nunca no código ou no APK.
 
 ## segurança
 

@@ -10,6 +10,12 @@ const config: CapacitorConfig = {
     url: serverUrl,
     cleartext: serverUrl.startsWith("http://"),
   },
+  plugins: {
+    SystemBars: {
+      style: "DARK",
+      insetsHandling: "css",
+    },
+  },
 };
 
 export default config;
