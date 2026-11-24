@@ -1,6 +1,6 @@
 "use client"
 
-import { calculateWeightedAverage, getWeeklyStudyHours } from "@/lib/academics"
+import { calculateAssessmentAverage, getWeeklyStudyHours } from "@/lib/academics"
 import { DashboardView, type DashboardData } from "@/components/dashboard-view"
 import { useApp } from "@/components/app-provider"
 
@@ -21,7 +21,7 @@ export function DashboardScreen() {
         description: discipline.description,
         color: discipline.color,
         icon: discipline.icon,
-        average: assessments.length ? calculateWeightedAverage(assessments) : 0,
+        average: calculateAssessmentAverage(assessments),
         noteCount: state.notes.filter((item) => item.disciplineId === discipline.id && item.userId === user?.id).length,
       }
     }),

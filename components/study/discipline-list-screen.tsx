@@ -3,7 +3,7 @@
 import * as React from "react"
 import Link from "next/link"
 import { ArrowUpRightIcon, BookOpenTextIcon, MoreHorizontalIcon, PencilIcon, PlusIcon, Trash2Icon } from "lucide-react"
-import { calculateWeightedAverage } from "@/lib/academics"
+import { calculateAssessmentAverage } from "@/lib/academics"
 import { useApp } from "@/components/app-provider"
 import { DisciplineForm } from "@/components/study/discipline-form"
 import { DisciplineIcon } from "@/components/study/discipline-icon"
@@ -83,7 +83,7 @@ export function DisciplineListScreen() {
           {disciplines.map((discipline) => {
             const assessments = state.assessments.filter((item) => item.disciplineId === discipline.id && item.userId === user?.id)
             const notes = state.notes.filter((item) => item.disciplineId === discipline.id && item.userId === user?.id)
-            const average = calculateWeightedAverage(assessments)
+            const average = calculateAssessmentAverage(assessments)
             return (
               <Card key={discipline.id} className="rounded-none border-border shadow-none transition-colors hover:bg-muted/20">
                 <CardHeader>

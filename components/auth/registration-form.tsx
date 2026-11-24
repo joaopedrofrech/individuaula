@@ -6,6 +6,7 @@ import { registrationSchema, type RegistrationInput } from "@/lib/validators"
 import { Button } from "@/components/ui/button"
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
+import { useTurnstile } from "@/components/auth/turnstile-field"
 
 type RegistrationFormProps = {
   onSubmit: (input: RegistrationInput) => void | Promise<void>
@@ -16,6 +17,7 @@ export function RegistrationForm({ onSubmit }: RegistrationFormProps) {
   const [values, setValues] = React.useState({ name: "", email: "", password: "" })
   const [errors, setErrors] = React.useState<Record<string, string>>({})
   const [submitting, setSubmitting] = React.useState(false)
+  const challenge = useTurnstile("signup")
 
   function update(field: keyof typeof values, value: string) {
     // atualiza o campo alterado e remove o erro antigo daquele campo.
@@ -37,11 +39,12 @@ export function RegistrationForm({ onSubmit }: RegistrationFormProps) {
     }
     setSubmitting(true)
     try {
-      await onSubmit(parsed.data)
+      await onSubmit({ ...parsed.data, turnstileToken: challenge.token || undefined })
     } catch (error) {
       setErrors({ form: error instanceof Error ? error.message : "Não foi possível criar sua conta." })
     } finally {
       setSubmitting(false)
+      challenge.reset()
     }
   }
 
@@ -64,8 +67,9 @@ export function RegistrationForm({ onSubmit }: RegistrationFormProps) {
           <FieldError>{errors.password}</FieldError>
         </Field>
       </FieldGroup>
+      {challenge.field}
       {errors.form && <FieldError>{errors.form}</FieldError>}
-      <Button type="submit" className="h-11 w-full rounded-none" disabled={submitting}>
+      <Button type="submit" className="h-11 w-full rounded-none" disabled={submitting || challenge.blocked}>
         {submitting ? "Criando conta..." : "Criar conta"}
       </Button>
       <p className="text-center text-sm text-muted-foreground">

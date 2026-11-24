@@ -36,6 +36,14 @@ export const sessions = sqliteTable(
   (table) => [index("sessions_user_idx").on(table.userId)],
 );
 
+// guarda apenas o hash do código de recuperação, com validade limitada e uso único.
+export const passwordResets = sqliteTable("password_resets", {
+  id: text("id").primaryKey(),
+  userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  expiresAt: timestamp("expires_at").notNull(),
+  createdAt: timestamp("created_at").notNull(),
+}, (table) => [index("password_resets_user_idx").on(table.userId)]);
+
 // matérias do aluno, com cor e ícone escolhidos por ele.
 export const disciplines = sqliteTable(
   "disciplines",
@@ -68,7 +76,7 @@ export const notes = sqliteTable(
   (table) => [index("notes_user_discipline_idx").on(table.userId, table.disciplineId)],
 );
 
-// provas e trabalhos de uma disciplina; a média ponderada é calculada a partir de `grade` e `weight`.
+// avaliações mantêm o peso antigo por compatibilidade; a média atual usa somente as notas.
 export const assessments = sqliteTable(
   "assessments",
   {

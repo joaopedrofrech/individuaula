@@ -1,10 +1,12 @@
 "use client"
 
 import * as React from "react"
+import Link from "next/link"
 import { loginSchema, type LoginInput } from "@/lib/validators"
 import { Button } from "@/components/ui/button"
 import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
+import { useTurnstile } from "@/components/auth/turnstile-field"
 
 type LoginFormProps = {
   onSubmit: (input: LoginInput) => void | Promise<void>
@@ -16,6 +18,7 @@ export function LoginForm({ onSubmit, submitLabel = "Entrar" }: LoginFormProps) 
   const [values, setValues] = React.useState({ email: "", password: "" })
   const [errors, setErrors] = React.useState<Record<string, string>>({})
   const [submitting, setSubmitting] = React.useState(false)
+  const challenge = useTurnstile("login")
 
   function update(field: "email" | "password", value: string) {
     // atualiza um campo e limpa somente o erro relacionado a ele.
@@ -37,11 +40,12 @@ export function LoginForm({ onSubmit, submitLabel = "Entrar" }: LoginFormProps) 
 
     setSubmitting(true)
     try {
-      await onSubmit(parsed.data)
+      await onSubmit({ ...parsed.data, turnstileToken: challenge.token || undefined })
     } catch (error) {
       setErrors({ form: error instanceof Error ? error.message : "Não foi possível entrar." })
     } finally {
       setSubmitting(false)
+      challenge.reset()
     }
   }
 
@@ -59,8 +63,10 @@ export function LoginForm({ onSubmit, submitLabel = "Entrar" }: LoginFormProps) 
           <FieldError>{errors.password}</FieldError>
         </Field>
       </FieldGroup>
+      <Link href="/esqueci-senha" className="self-end text-sm font-semibold text-brand underline-offset-4 hover:underline">Esqueci minha senha</Link>
+      {challenge.field}
       {errors.form && <FieldError>{errors.form}</FieldError>}
-      <Button type="submit" className="h-11 w-full rounded-none" disabled={submitting}>
+      <Button type="submit" className="h-11 w-full rounded-none" disabled={submitting || challenge.blocked}>
         {submitting ? "Entrando..." : submitLabel}
       </Button>
       <FieldDescription className="text-center">Seus dados ficam associados somente ao seu espaço de estudos.</FieldDescription>

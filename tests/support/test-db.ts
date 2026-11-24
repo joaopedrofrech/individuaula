@@ -15,7 +15,7 @@ function migrationStatements() {
     .filter(Boolean);
 }
 
-const tables = ["study_sessions", "assessments", "notes", "disciplines", "sessions", "users"];
+const tables = ["password_resets", "study_sessions", "assessments", "notes", "disciplines", "sessions", "users"];
 
 // sobe um D1 em memória (SQLite do workerd) com o schema aplicado; use um por arquivo de teste.
 export async function createTestDatabase() {

@@ -5,6 +5,12 @@ import type { D1Binding } from "@/server/db";
 export type RuntimeEnv = {
   DB: D1Binding;
   YOUTUBE_API_KEY?: string;
+  RESEND_API_KEY?: string;
+  RESEND_FROM?: string;
+  APP_URL?: string;
+  TURNSTILE_SECRET?: string;
+  TURNSTILE_SITE_KEY?: string;
+  TURNSTILE_HOSTNAMES?: string;
 };
 
 export function getRuntimeEnv() {

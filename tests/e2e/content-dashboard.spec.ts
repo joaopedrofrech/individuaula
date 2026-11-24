@@ -51,7 +51,6 @@ test.describe("UC07 e UC08", () => {
     await page.getByRole("button", { name: /adicionar avaliação/i }).click();
     await page.getByLabel(/nome da avaliação|título/i).fill("Prova 1");
     await page.getByRole("spinbutton", { name: "Nota" }).fill("9");
-    await page.getByRole("spinbutton", { name: "Peso" }).fill("1");
     await page.getByRole("button", { name: /salvar avaliação/i }).click();
 
     await page.goto("/dashboard");

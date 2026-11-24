@@ -1,6 +1,7 @@
 import { noteText, sanitizeNoteHtml } from "@/lib/notes"
 import { noteUpdateRequestSchema } from "@/lib/validators"
-import { assertSameOrigin, handle, HttpError, readJson, requireUser } from "@/server/api"
+import { assertSameOrigin, handle, HttpError, requireUser } from "@/server/api"
+import { readTurnstileJson } from "@/server/turnstile"
 import { getServices } from "@/server/services"
 
 type Context = { params: Promise<{ id: string }> }
@@ -8,10 +9,10 @@ type Context = { params: Promise<{ id: string }> }
 export async function PATCH(request: Request, { params }: Context) {
   // atualiza a anotação do aluno; `imageDataUrl: null` remove a imagem.
   return handle("Não foi possível atualizar a anotação.", async () => {
-    const { auth, study } = getServices()
+    const { auth, study, turnstile } = getServices()
     const user = await requireUser(request, auth)
     assertSameOrigin(request)
-    const data = noteUpdateRequestSchema.parse(await readJson(request))
+    const data = noteUpdateRequestSchema.parse(await readTurnstileJson(request, turnstile, "note"))
     if (data.content !== undefined) {
       data.content = sanitizeNoteHtml(data.content)
       if (!noteText(data.content)) throw new HttpError(422, "Escreva o conteúdo da anotação.")

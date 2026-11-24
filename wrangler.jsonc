@@ -6,6 +6,16 @@
   "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
   // o esbuild injetaria `__name` nas funções que o next-themes serializa para um script inline, quebrando o tema no navegador.
   "keep_names": false,
+  "routes": [
+    { "pattern": "individuaula.tech", "custom_domain": true },
+    { "pattern": "www.individuaula.tech", "custom_domain": true }
+  ],
+  "vars": {
+    "RESEND_FROM": "IndividuAula <noreply@individuaula.tech>",
+    "APP_URL": "https://individuaula.tech",
+    "TURNSTILE_SITE_KEY": "0x4AAAAAAGPmTYDu48YLcjUo",
+    "TURNSTILE_HOSTNAMES": "individuaula.tech"
+  },
   "assets": {
     "directory": ".open-next/assets",
     "binding": "ASSETS"

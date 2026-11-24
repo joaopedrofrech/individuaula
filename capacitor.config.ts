@@ -1,6 +1,6 @@
 import type { CapacitorConfig } from "@capacitor/cli";
 
-const serverUrl = process.env.CAP_SERVER_URL?.trim() || "https://app.individuaula.workers.dev";
+const serverUrl = process.env.CAP_SERVER_URL?.trim() || "https://individuaula.tech";
 
 const config: CapacitorConfig = {
   appId: "br.edu.aedb.individuaula",

@@ -1,16 +1,17 @@
 import { assessmentUpdateSchema } from "@/lib/validators"
-import { assertSameOrigin, handle, HttpError, readJson, requireUser } from "@/server/api"
+import { assertSameOrigin, handle, HttpError, requireUser } from "@/server/api"
+import { readTurnstileJson } from "@/server/turnstile"
 import { getServices } from "@/server/services"
 
 type Context = { params: Promise<{ id: string }> }
 
 export async function PATCH(request: Request, { params }: Context) {
-  // atualiza nota, peso ou título de uma avaliação do aluno.
+  // atualiza os dados de uma avaliação sem apagar valores antigos.
   return handle("Não foi possível atualizar a avaliação.", async () => {
-    const { auth, study } = getServices()
+    const { auth, study, turnstile } = getServices()
     const user = await requireUser(request, auth)
     assertSameOrigin(request)
-    const data = assessmentUpdateSchema.parse(await readJson(request))
+    const data = assessmentUpdateSchema.parse(await readTurnstileJson(request, turnstile, "assessment"))
     const assessment = await study.updateAssessment(user.id, (await params).id, data)
     if (!assessment) throw new HttpError(404, "Avaliação não encontrada.")
     return Response.json(assessment)

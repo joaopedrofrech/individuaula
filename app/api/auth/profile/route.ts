@@ -1,4 +1,5 @@
-import { assertSameOrigin, handle, readJson, requireUser } from "@/server/api"
+import { assertSameOrigin, handle, requireUser } from "@/server/api"
+import { readTurnstileJson } from "@/server/turnstile"
 import { getServices } from "@/server/services"
 
 export async function GET(request: Request) {
@@ -12,10 +13,10 @@ export async function GET(request: Request) {
 export async function PATCH(request: Request) {
   // valida e atualiza os dados do perfil autenticado.
   return handle("Não foi possível atualizar o perfil.", async () => {
-    const { auth } = getServices()
+    const { auth, turnstile } = getServices()
     const current = await requireUser(request, auth)
     assertSameOrigin(request)
-    const user = await auth.updateProfile(current.id, await readJson(request))
+    const user = await auth.updateProfile(current.id, await readTurnstileJson(request, turnstile, "profile"))
     return Response.json({ user })
   })
 }

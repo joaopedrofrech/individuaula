@@ -4,6 +4,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ContentSearch } from "@/components/study/content-search";
 import { MAX_PAGES } from "@/hooks/use-video-search";
 
+// isola a paginação da verificação externa, que tem testes específicos.
+vi.mock("@/components/auth/turnstile-field", () => ({ useTurnstile: () => ({ token: "", field: null, blocked: false, reset: () => {} }) }));
+
 // o jsdom não tem IntersectionObserver; esta versão deixa o teste decidir quando o fim da lista aparece.
 const observers: Array<{ callback: IntersectionObserverCallback; target?: Element; disconnected: boolean }> = [];
 

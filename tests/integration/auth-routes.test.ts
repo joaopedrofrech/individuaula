@@ -5,6 +5,8 @@ import { POST as login } from "@/app/api/auth/login/route";
 import { POST as logout } from "@/app/api/auth/logout/route";
 import { GET as sessionRoute } from "@/app/api/auth/session/route";
 import { GET as profile, PATCH as updateProfile } from "@/app/api/auth/profile/route";
+import { POST as forgotPassword } from "@/app/api/auth/forgot-password/route";
+import { POST as resetPassword } from "@/app/api/auth/reset-password/route";
 import { call } from "../support/api";
 import { createTestServices } from "../support/services";
 import { createTestDatabase } from "../support/test-db";
@@ -20,6 +22,27 @@ beforeEach(async () => { await database.reset(); ctx.services = createTestServic
 
 const account = { name: "Ana Souza", email: "ana@exemplo.com", password: "segredo123" };
 const signUp = (body: unknown = account, headers?: Record<string, string>) => call(register, "POST", "/api/auth/register", { body, headers });
+
+describe("recuperação de senha por e-mail", () => {
+  it("envia link temporário e devolve a mesma resposta para e-mails inexistentes", async () => {
+    const send = vi.fn(async (_message: { to: string; subject: string; text: string }) => {});
+    ctx.services = { ...createTestServices(database.db), email: { appUrl: "https://app.example.com", send } };
+    await signUp();
+    send.mockClear();
+    const known = await call(forgotPassword, "POST", "/api/auth/forgot-password", { body: { email: account.email } });
+    const unknown = await call(forgotPassword, "POST", "/api/auth/forgot-password", { body: { email: "ninguem@exemplo.com" } });
+    expect(known.status).toBe(200);
+    expect(unknown.body).toEqual(known.body);
+    expect(send).toHaveBeenCalledTimes(1);
+    const message = send.mock.calls[0]?.[0] as { text: string };
+    const token = message.text.match(/#token=([a-f0-9]{64})/)?.[1];
+    expect(token).toBeTruthy();
+    const changed = await call(resetPassword, "POST", "/api/auth/reset-password", { body: { token, password: "nova-senha123" } });
+    const reused = await call(resetPassword, "POST", "/api/auth/reset-password", { body: { token, password: "outra-senha123" } });
+    expect(changed.status).toBe(200);
+    expect(reused.status).toBe(400);
+  });
+});
 
 describe("cadastro e login", () => {
   it("cadastra, abre a sessão em cookie HttpOnly e não devolve credenciais", async () => {

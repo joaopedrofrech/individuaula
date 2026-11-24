@@ -18,6 +18,31 @@ function setup(options: Parameters<typeof createTestServices>[1] = {}) {
 
 const failure = (promise: Promise<unknown>) => promise.then(() => null, (error: unknown) => error as AuthError);
 
+describe("recuperação de senha", () => {
+  it("usa o código uma vez e encerra as sessões anteriores", async () => {
+    const { auth } = setup();
+    await auth.register(account);
+    const session = await auth.login(account);
+    const reset = await auth.createPasswordReset(account.email);
+    expect(reset).not.toBeNull();
+    await expect(auth.resetPassword(reset!.token, "nova-senha123")).resolves.toBe(true);
+    await expect(auth.resetPassword(reset!.token, "outra-senha123")).resolves.toBe(false);
+    await expect(auth.getSession(session.token)).resolves.toBeNull();
+    await expect(auth.login({ ...account, password: "nova-senha123" })).resolves.toMatchObject({ user: { email: account.email } });
+    await expect(auth.login(account)).rejects.toMatchObject({ code: "INVALID_CREDENTIALS" });
+  });
+
+  it("recusa códigos vencidos e não cria códigos para contas desconhecidas", async () => {
+    let clock = new Date("2026-01-01T10:00:00.000Z");
+    const { auth } = setup({ now: () => clock });
+    await auth.register(account);
+    expect(await auth.createPasswordReset("ninguem@exemplo.com")).toBeNull();
+    const reset = await auth.createPasswordReset(account.email);
+    clock = new Date(clock.getTime() + 31 * 60_000);
+    await expect(auth.resetPassword(reset!.token, "nova-senha123")).resolves.toBe(false);
+  });
+});
+
 describe("cadastro", () => {
   it("cria a conta no banco, normaliza o e-mail e não devolve a senha nem o hash", async () => {
     const { auth } = setup();

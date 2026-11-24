@@ -5,7 +5,7 @@ import Image from "next/image"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { ArrowLeftIcon, CalendarDaysIcon, PencilIcon, PlusIcon, SearchIcon, Trash2Icon } from "lucide-react"
-import { calculateWeightedAverage } from "@/lib/academics"
+import { calculateAssessmentAverage } from "@/lib/academics"
 import { listAssessments, listNotes, searchNotes } from "@/lib/study-state"
 import { sanitizeNoteHtml } from "@/lib/notes"
 import { useApp } from "@/components/app-provider"
@@ -51,7 +51,7 @@ export function DisciplineDetailScreen({ disciplineId }: { disciplineId: string 
   const allNotes = listNotes(state, ownerId, disciplineId)
   const notes = searchNotes(state, ownerId, disciplineId, noteSearch)
   const assessments = listAssessments(state, ownerId, disciplineId)
-  const average = assessments.length ? calculateWeightedAverage(assessments) : 0
+  const average = calculateAssessmentAverage(assessments)
   const editingNote = allNotes.find((item) => item.id === editingNoteId)
   const editingAssessment = assessments.find((item) => item.id === editingAssessmentId)
 
@@ -137,13 +137,13 @@ export function DisciplineDetailScreen({ disciplineId }: { disciplineId: string 
           <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
             <div>
               <h2 className="font-heading text-2xl font-black tracking-[-0.05em] text-brand">Avaliações e notas</h2>
-              <p className="mt-1 text-sm text-muted-foreground">A média ponderada se atualiza a cada novo registro.</p>
+              <p className="mt-1 text-sm text-muted-foreground">A média simples se atualiza a cada novo registro.</p>
             </div>
             <Button className="rounded-none bg-brand text-brand-foreground hover:bg-brand/90" onClick={() => { setEditingAssessmentId(null); setAssessmentDialogOpen(true) }}>
               <PlusIcon data-icon="inline-start" /> adicionar avaliação
             </Button>
           </div>
-          {assessments.length === 0 ? <div className="border border-dashed border-border p-8 text-sm text-muted-foreground">Ainda não há notas cadastradas. Adicione uma avaliação para acompanhar seu desempenho.</div> : <section aria-label="Histórico de avaliações" className="border border-border"><Table><TableHeader><TableRow><TableHead>Avaliação</TableHead><TableHead>Nota</TableHead><TableHead>Peso</TableHead><TableHead>Atualizada</TableHead><TableHead className="text-right">Ações</TableHead></TableRow></TableHeader><TableBody>{assessments.map((assessment) => <TableRow key={assessment.id}><TableCell className="font-semibold text-brand">{assessment.title}</TableCell><TableCell>{assessment.grade.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</TableCell><TableCell>{assessment.weight}</TableCell><TableCell>{formatDate(assessment.updatedAt)}</TableCell><TableCell className="text-right"><div className="flex justify-end gap-1"><Button variant="ghost" size="icon-sm" aria-label="Editar avaliação" onClick={() => { setEditingAssessmentId(assessment.id); setAssessmentDialogOpen(true) }}><PencilIcon /></Button><Button variant="ghost" size="icon-sm" aria-label="Excluir avaliação" onClick={() => setDeletingAssessmentId(assessment.id)}><Trash2Icon /></Button></div></TableCell></TableRow>)}</TableBody></Table></section>}
+          {assessments.length === 0 ? <div className="border border-dashed border-border p-8 text-sm text-muted-foreground">Ainda não há notas cadastradas. Adicione uma avaliação para acompanhar seu desempenho.</div> : <section aria-label="Histórico de avaliações" className="border border-border"><Table><TableHeader><TableRow><TableHead>Avaliação</TableHead><TableHead>Nota</TableHead><TableHead>Atualizada</TableHead><TableHead className="text-right">Ações</TableHead></TableRow></TableHeader><TableBody>{assessments.map((assessment) => <TableRow key={assessment.id}><TableCell className="font-semibold text-brand">{assessment.title}</TableCell><TableCell>{assessment.grade.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</TableCell><TableCell>{formatDate(assessment.updatedAt)}</TableCell><TableCell className="text-right"><div className="flex justify-end gap-1"><Button variant="ghost" size="icon-sm" aria-label="Editar avaliação" onClick={() => { setEditingAssessmentId(assessment.id); setAssessmentDialogOpen(true) }}><PencilIcon /></Button><Button variant="ghost" size="icon-sm" aria-label="Excluir avaliação" onClick={() => setDeletingAssessmentId(assessment.id)}><Trash2Icon /></Button></div></TableCell></TableRow>)}</TableBody></Table></section>}
         </TabsContent>
 
         <TabsContent value="content" className="mt-0"><ContentSearch disciplineId={discipline.id} /></TabsContent>
@@ -165,8 +165,8 @@ export function DisciplineDetailScreen({ disciplineId }: { disciplineId: string 
 
       <Dialog open={assessmentDialogOpen} onOpenChange={(open) => { setAssessmentDialogOpen(open); if (!open) setEditingAssessmentId(null) }}>
         <DialogContent className="max-h-[90svh] overflow-y-auto rounded-none sm:max-w-lg">
-          <DialogHeader><DialogTitle>{editingAssessment ? "Editar avaliação" : "Nova avaliação"}</DialogTitle><DialogDescription>Registre a nota e o peso para atualizar sua média.</DialogDescription></DialogHeader>
-          <AssessmentForm key={editingAssessment?.id ?? "new-assessment"} initialValues={editingAssessment ? { title: editingAssessment.title, grade: editingAssessment.grade, weight: editingAssessment.weight } : undefined} onSubmit={(input) => { if (editingAssessmentId) updateAssessment(editingAssessmentId, input); else addAssessment(discipline.id, input); setAssessmentDialogOpen(false); setEditingAssessmentId(null) }} />
+          <DialogHeader><DialogTitle>{editingAssessment ? "Editar avaliação" : "Nova avaliação"}</DialogTitle><DialogDescription>Registre a nota para atualizar sua média.</DialogDescription></DialogHeader>
+          <AssessmentForm key={editingAssessment?.id ?? "new-assessment"} initialValues={editingAssessment ? { title: editingAssessment.title, grade: editingAssessment.grade } : undefined} onSubmit={(input) => { if (editingAssessmentId) updateAssessment(editingAssessmentId, input); else addAssessment(discipline.id, input); setAssessmentDialogOpen(false); setEditingAssessmentId(null) }} />
         </DialogContent>
       </Dialog>
 

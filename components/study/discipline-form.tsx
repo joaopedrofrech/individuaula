@@ -8,10 +8,11 @@ import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from "@/c
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { cn } from "@/lib/utils"
+import { useTurnstile } from "@/components/auth/turnstile-field"
 
 type DisciplineFormProps = {
   initialValues?: Partial<DisciplineInput>
-  onSubmit: (input: DisciplineInput) => void | Promise<void>
+  onSubmit: (input: DisciplineInput & { turnstileToken?: string }) => void | Promise<void>
   submitLabel?: string
 }
 
@@ -59,6 +60,7 @@ export function DisciplineForm({ initialValues, onSubmit, submitLabel = "Salvar 
     icon: (initialValues?.icon as DisciplineInput["icon"]) ?? "book",
   })
   const [error, setError] = React.useState("")
+  const challenge = useTurnstile("discipline")
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     // valida a configuração da disciplina antes de enviá-la ao estado principal.
@@ -69,7 +71,7 @@ export function DisciplineForm({ initialValues, onSubmit, submitLabel = "Salvar 
       return
     }
     setError("")
-    await onSubmit(parsed.data)
+    try { await onSubmit({ ...parsed.data, turnstileToken: challenge.token || undefined }) } finally { challenge.reset() }
   }
 
   return (
@@ -99,7 +101,8 @@ export function DisciplineForm({ initialValues, onSubmit, submitLabel = "Salvar 
         </Field>
       </FieldGroup>
       <DisciplinePreview values={values} />
-      <Button type="submit" className="rounded-none">{submitLabel}</Button>
+      {challenge.field}
+      <Button type="submit" className="rounded-none" disabled={challenge.blocked}>{submitLabel}</Button>
     </form>
   )
 }

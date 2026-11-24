@@ -27,6 +27,11 @@ export function calculateWeightedAverage(grades: WeightedGrade[]) {
   return roundToTwo(total / totalWeight);
 }
 
+// calcula a média simples, sem alterar os pesos históricos armazenados no banco.
+export function calculateAssessmentAverage(grades: Array<{ grade: number }>) {
+  return grades.length ? roundToTwo(grades.reduce((sum, item) => sum + item.grade, 0) / grades.length) : 0;
+}
+
 export function calculateGeneralAverage(averages: Array<number | null | undefined>) {
   // remove disciplinas sem nota e consolida o resultado geral do aluno.
   const validAverages = averages.filter((average): average is number => average !== null && average !== undefined);

@@ -21,6 +21,8 @@ import {
   type RegistrationInput,
 } from "@/lib/validators"
 
+type WithChallenge<T> = T & { turnstileToken?: string }
+
 type AppContextValue = {
   state: ClientState
   user: User | null
@@ -28,16 +30,16 @@ type AppContextValue = {
   register: (input: RegistrationInput) => Promise<User>
   login: (input: LoginInput) => Promise<User>
   logout: () => Promise<boolean>
-  updateProfile: (input: ProfileInput) => Promise<User>
+  updateProfile: (input: WithChallenge<ProfileInput>) => Promise<User>
   loadDemoData: () => void
-  addDiscipline: (input: DisciplineInput) => void
-  updateDiscipline: (id: string, input: Partial<DisciplineInput>) => void
+  addDiscipline: (input: WithChallenge<DisciplineInput>) => void
+  updateDiscipline: (id: string, input: WithChallenge<Partial<DisciplineInput>>) => void
   deleteDiscipline: (id: string) => void
-  addNote: (disciplineId: string, input: NoteInput) => void
-  updateNote: (id: string, input: Partial<NoteInput>) => void
+  addNote: (disciplineId: string, input: WithChallenge<NoteInput>) => void
+  updateNote: (id: string, input: WithChallenge<Partial<NoteInput>>) => void
   deleteNote: (id: string) => void
-  addAssessment: (disciplineId: string, input: AssessmentInput) => void
-  updateAssessment: (id: string, input: Partial<AssessmentInput>) => void
+  addAssessment: (disciplineId: string, input: WithChallenge<AssessmentInput>) => void
+  updateAssessment: (id: string, input: WithChallenge<Partial<AssessmentInput>>) => void
   deleteAssessment: (id: string) => void
 }
 
@@ -187,7 +189,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       if (input.email.toLowerCase() !== current.email) {
         throw new Error("O e-mail não pode ser alterado por enquanto.")
       }
-      const { user: raw } = await apiRequest<{ user: User }>("/api/auth/profile", { method: "PATCH", body: { name: input.name } })
+      const { user: raw } = await apiRequest<{ user: User }>("/api/auth/profile", { method: "PATCH", body: { name: input.name, turnstileToken: input.turnstileToken } })
       const user = reviveUser(raw as never)
       setState((previous) => ({ ...previous, user }))
       return user
@@ -206,7 +208,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       const owner = requireUser(state)
       const id = createClientId("discipline")
       setState((current) => addDiscipline(current, owner.id, data, new Date(), id))
-      persist(() => apiRequest("/api/disciplines", { method: "POST", body: { ...data, id } }))
+      persist(() => apiRequest("/api/disciplines", { method: "POST", body: { ...data, id, turnstileToken: input.turnstileToken } }))
     },
     // atualiza os dados visuais e textuais de uma disciplina existente.
     updateDiscipline(id, input) {
@@ -214,7 +216,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       const data = disciplineUpdateSchema.parse(input)
       const ownerId = state.user.id
       setState((current) => patchDiscipline(current, ownerId, id, data))
-      persist(() => apiRequest(`/api/disciplines/${id}`, { method: "PATCH", body: data }))
+      persist(() => apiRequest(`/api/disciplines/${id}`, { method: "PATCH", body: { ...data, turnstileToken: input.turnstileToken } }))
     },
     // remove a disciplina e também seus registros dependentes.
     deleteDiscipline(id) {
@@ -229,7 +231,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       const owner = requireOwnedDiscipline(state, disciplineId)
       const id = createClientId("note")
       setState((current) => addNote(current, owner.id, disciplineId, data, new Date(), id))
-      persist(() => apiRequest("/api/notes", { method: "POST", body: { ...data, id, disciplineId } }))
+      persist(() => apiRequest("/api/notes", { method: "POST", body: { ...data, id, disciplineId, turnstileToken: input.turnstileToken } }))
     },
     // altera o conteúdo de uma anotação sem afetar outras disciplinas.
     updateNote(id, input) {
@@ -238,7 +240,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       const ownerId = state.user.id
       setState((current) => patchNote(current, ownerId, id, data))
       // `undefined` some no JSON; `null` diz ao servidor para remover a imagem.
-      const body = "imageDataUrl" in input ? { ...data, imageDataUrl: data.imageDataUrl ?? null } : data
+      const body = "imageDataUrl" in input ? { ...data, imageDataUrl: data.imageDataUrl ?? null, turnstileToken: input.turnstileToken } : { ...data, turnstileToken: input.turnstileToken }
       persist(() => apiRequest(`/api/notes/${id}`, { method: "PATCH", body }))
     },
     // remove uma anotação específica do espaço atual.
@@ -248,13 +250,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       setState((current) => removeNote(current, ownerId, id))
       persist(() => apiRequest(`/api/notes/${id}`, { method: "DELETE" }))
     },
-    // registra uma avaliação; o schema já converte nota e peso para número.
+    // registra a nota e preserva o campo legado de peso para compatibilidade.
     addAssessment(disciplineId, input) {
       const data = assessmentSchema.parse(input)
       const owner = requireOwnedDiscipline(state, disciplineId)
       const id = createClientId("assessment")
       setState((current) => addAssessment(current, owner.id, disciplineId, data, new Date(), id))
-      persist(() => apiRequest("/api/assessments", { method: "POST", body: { ...data, id, disciplineId } }))
+      persist(() => apiRequest("/api/assessments", { method: "POST", body: { ...data, id, disciplineId, turnstileToken: input.turnstileToken } }))
     },
     // edita uma avaliação mantendo os valores antigos que não foram enviados.
     updateAssessment(id, input) {
@@ -262,7 +264,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       const data = assessmentUpdateSchema.parse(input)
       const ownerId = state.user.id
       setState((current) => patchAssessment(current, ownerId, id, data))
-      persist(() => apiRequest(`/api/assessments/${id}`, { method: "PATCH", body: data }))
+      persist(() => apiRequest(`/api/assessments/${id}`, { method: "PATCH", body: { ...data, turnstileToken: input.turnstileToken } }))
     },
     // remove a avaliação e deixa a média pronta para ser recalculada.
     deleteAssessment(id) {

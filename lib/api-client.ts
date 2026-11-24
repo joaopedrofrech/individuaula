@@ -4,20 +4,20 @@ export class ApiError extends Error {
   }
 }
 
-type RequestOptions = { method?: "GET" | "POST" | "PATCH" | "DELETE"; body?: unknown };
+type RequestOptions = { method?: "GET" | "POST" | "PATCH" | "DELETE"; body?: unknown; headers?: Record<string, string> };
 
 // o navegador limita o corpo de um fetch `keepalive` a 64 KB; acima disso a gravação não sobrevive à navegação.
 const KEEPALIVE_LIMIT = 60_000;
 
 // chama a API do próprio app; o navegador envia o cookie de sessão sozinho (HttpOnly, fora do alcance de scripts).
-export async function apiRequest<T = unknown>(path: string, { method = "GET", body }: RequestOptions = {}): Promise<T> {
+export async function apiRequest<T = unknown>(path: string, { method = "GET", body, headers }: RequestOptions = {}): Promise<T> {
   const payload = body === undefined ? undefined : JSON.stringify(body);
   const response = await fetch(path, {
     method,
     credentials: "same-origin",
     // nunca reaproveita uma resposta guardada: sessão e dados mudam a cada logout, login e gravação.
     cache: "no-store",
-    headers: payload === undefined ? undefined : { "content-type": "application/json" },
+    headers: payload === undefined ? headers : { "content-type": "application/json", ...headers },
     body: payload,
     // uma gravação pequena termina mesmo que o aluno recarregue ou feche a página logo em seguida.
     keepalive: method !== "GET" && (payload?.length ?? 0) < KEEPALIVE_LIMIT,

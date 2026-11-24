@@ -1,4 +1,4 @@
-import { calculateWeightedAverage } from "@/lib/academics"
+import { calculateAssessmentAverage } from "@/lib/academics"
 import { createClientId } from "@/lib/client-store"
 import { noteText } from "@/lib/notes"
 import type { Assessment, Discipline, Note } from "@/lib/types"
@@ -91,5 +91,5 @@ export function searchNotes(state: StudyData, userId: string, disciplineId: stri
 }
 
 export function disciplineAverage(state: StudyData, userId: string, disciplineId: string) {
-  return calculateWeightedAverage(listAssessments(state, userId, disciplineId))
+  return calculateAssessmentAverage(listAssessments(state, userId, disciplineId))
 }

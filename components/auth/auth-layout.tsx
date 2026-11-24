@@ -10,10 +10,10 @@ export function AuthLayout({ children, title, description }: { children: React.R
   return (
     <main className="grid min-h-svh bg-background lg:grid-cols-[0.82fr_1.18fr]">
       <RedirectWhenLoggedIn />
-      <section className="relative hidden overflow-hidden bg-brand p-10 text-brand-foreground lg:flex lg:flex-col lg:justify-between xl:p-14">
+      <section className="relative hidden overflow-hidden bg-brand p-10 text-brand-foreground dark:bg-card dark:text-foreground lg:flex lg:flex-col lg:justify-between xl:p-14">
         <div className="absolute right-[-10%] bottom-[-12%] size-[30rem] border-[3rem] border-signal/15" />
-        <div className="relative"><BrandMark inverse /><div className="mt-20 max-w-md"><p className="text-sm leading-relaxed text-brand-foreground/60">Uma rotina de estudos mais clara começa com um espaço que entende o seu ritmo.</p><h2 className="mt-6 font-heading text-5xl font-black leading-[0.95] tracking-[-0.08em]">Aprender também é perceber o caminho.</h2></div></div>
-        <div className="relative grid gap-4 text-sm text-brand-foreground/70"><SchoolCrest className="mb-4 size-28" />
+        <div className="relative"><BrandMark inverse /><div className="mt-20 max-w-md"><p className="text-sm leading-relaxed text-brand-foreground/60 dark:text-muted-foreground">Uma rotina de estudos mais clara começa com um espaço que entende o seu ritmo.</p><h2 className="mt-6 font-heading text-5xl font-black leading-[0.95] tracking-[-0.08em]">Aprender também é perceber o caminho.</h2></div></div>
+        <div className="relative grid gap-4 text-sm text-brand-foreground/70 dark:text-muted-foreground"><SchoolCrest className="mb-4 size-28" />
           <div className="flex items-center gap-3"><span className="grid size-9 place-items-center border border-brand-foreground/20 bg-brand-foreground/10"><BookOpenTextIcon className="size-4" /></span><span>disciplinas no seu lugar</span></div>
           <div className="flex items-center gap-3"><span className="grid size-9 place-items-center border border-brand-foreground/20 bg-brand-foreground/10"><NotebookPenIcon className="size-4" /></span><span>anotações que não se perdem</span></div>
           <div className="flex items-center gap-3"><span className="grid size-9 place-items-center border border-brand-foreground/20 bg-brand-foreground/10"><ChartNoAxesCombinedIcon className="size-4" /></span><span>médias que contam uma história</span></div>

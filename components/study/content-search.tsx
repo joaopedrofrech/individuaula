@@ -11,6 +11,7 @@ import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
 import { Skeleton } from "@/components/ui/skeleton"
+import { useTurnstile } from "@/components/auth/turnstile-field"
 
 function VideoCard({ video }: { video: YoutubeVideo }) {
   // mostra a miniatura, o título, o canal e o link para assistir no YouTube.
@@ -38,24 +39,31 @@ export function ContentSearch({ disciplineId }: { disciplineId?: string }) {
   const [query, setQuery] = React.useState("")
   const { videos, searched, loading, loadingMore, error, loadMoreError, hasMore, reachedLimit, search, loadMore } = useVideoSearch(disciplineId)
   const sentinel = React.useRef<HTMLDivElement>(null)
+  const challenge = useTurnstile("content_search")
 
   function submit(event: React.FormEvent<HTMLFormElement>) {
     // consulta a rota server-side e mostra a primeira página de resultados.
     event.preventDefault()
-    if (query.trim()) void search(query.trim())
+    if (query.trim() && !challenge.blocked) {
+      void search(query.trim(), challenge.token || undefined)
+      challenge.reset()
+    }
   }
 
   React.useEffect(() => {
     // observa o fim da lista e carrega a próxima página quando o aluno chega perto dele.
     // o observador é recriado a cada página nova: assim, se o fim ainda estiver visível, ele dispara de novo.
     const element = sentinel.current
-    if (!element || !hasMore || loadMoreError) return
+    if (!element || !hasMore || loadMoreError || challenge.blocked) return
     const observer = new IntersectionObserver((entries) => {
-      if (entries.some((entry) => entry.isIntersecting)) void loadMore()
+      if (entries.some((entry) => entry.isIntersecting)) {
+        void loadMore(challenge.token || undefined)
+        challenge.reset()
+      }
     }, { rootMargin: "400px" })
     observer.observe(element)
     return () => observer.disconnect()
-  }, [hasMore, loadMore, loadMoreError, videos.length])
+  }, [hasMore, loadMore, loadMoreError, videos.length, challenge.blocked, challenge.token])
 
   return (
     <section className="flex flex-col gap-6">
@@ -71,7 +79,8 @@ export function ContentSearch({ disciplineId }: { disciplineId?: string }) {
             <Input id="content-query" aria-label="Buscar conteúdo" value={query} onValueChange={(value) => setQuery(value)} placeholder="Ex.: funções do segundo grau" />
           </Field>
         </FieldGroup>
-        <Button type="submit" className="h-11 rounded-none bg-brand text-brand-foreground hover:bg-brand/90" disabled={loading}>
+        {challenge.field}
+        <Button type="submit" className="h-11 rounded-none bg-brand text-brand-foreground hover:bg-brand/90" disabled={loading || challenge.blocked}>
           <SearchIcon data-icon="inline-start" />{loading ? "Pesquisando..." : "Pesquisar"}
         </Button>
       </form>
@@ -97,7 +106,7 @@ export function ContentSearch({ disciplineId }: { disciplineId?: string }) {
           {loadMoreError && (
             <div role="alert" className="flex flex-col items-start gap-3 border border-destructive bg-destructive/10 p-4 text-sm text-destructive">
               <p>{loadMoreError}</p>
-              <Button type="button" variant="outline" className="rounded-none" onClick={() => void loadMore()}>Tentar de novo</Button>
+              <Button type="button" variant="outline" className="rounded-none" disabled={challenge.blocked} onClick={() => { void loadMore(challenge.token || undefined); challenge.reset() }}>Tentar de novo</Button>
             </div>
           )}
           {hasMore && <div ref={sentinel} aria-hidden="true" className="h-px" />}

@@ -25,14 +25,14 @@ export function useVideoSearch(disciplineId?: string) {
   const query = React.useRef("")
   const busy = React.useRef(false)
 
-  const fetchPage = React.useCallback((term: string, pageToken?: string) => {
+  const fetchPage = React.useCallback((term: string, pageToken?: string, turnstileToken?: string) => {
     const params = new URLSearchParams({ q: term })
     if (disciplineId) params.set("disciplineId", disciplineId)
     if (pageToken) params.set("pageToken", pageToken)
-    return apiRequest<SearchResponse>(`/api/youtube/search?${params.toString()}`)
+    return apiRequest<SearchResponse>(`/api/youtube/search?${params.toString()}`, { headers: turnstileToken ? { "x-turnstile-token": turnstileToken } : undefined })
   }, [disciplineId])
 
-  const search = React.useCallback(async (term: string) => {
+  const search = React.useCallback(async (term: string, turnstileToken?: string) => {
     const id = ++searchId.current
     query.current = term
     busy.current = true
@@ -41,7 +41,7 @@ export function useVideoSearch(disciplineId?: string) {
     setError("")
     setLoadMoreError("")
     try {
-      const body = await fetchPage(term)
+      const body = await fetchPage(term, undefined, turnstileToken)
       if (id !== searchId.current) return
       setVideos(body.items ?? [])
       setNextPageToken(body.nextPageToken)
@@ -61,14 +61,14 @@ export function useVideoSearch(disciplineId?: string) {
     }
   }, [fetchPage])
 
-  const loadMore = React.useCallback(async () => {
+  const loadMore = React.useCallback(async (turnstileToken?: string) => {
     if (busy.current || !nextPageToken || pages >= MAX_PAGES) return
     const id = searchId.current
     busy.current = true
     setLoadingMore(true)
     setLoadMoreError("")
     try {
-      const body = await fetchPage(query.current, nextPageToken)
+      const body = await fetchPage(query.current, nextPageToken, turnstileToken)
       if (id !== searchId.current) return
       // o YouTube às vezes repete um vídeo entre páginas; o id evita cartões duplicados.
       setVideos((current) => {

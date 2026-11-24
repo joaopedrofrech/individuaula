@@ -1,7 +1,7 @@
-import { eq } from "drizzle-orm";
-import { sessions, users } from "@/db/schema";
+import { and, eq, gt } from "drizzle-orm";
+import { passwordResets, sessions, users } from "@/db/schema";
 import type { User } from "@/lib/types";
-import { loginSchema, registrationSchema, updateProfileSchema } from "@/lib/validators";
+import { loginSchema, passwordSchema, registrationSchema, updateProfileSchema } from "@/lib/validators";
 import { comparePassword, hashPassword, randomHex, sha256Hex } from "@/server/crypto";
 import type { Db } from "@/server/db";
 
@@ -50,6 +50,31 @@ export function createAuthService({ db, now = () => new Date() }: AuthServiceOpt
   }
 
   return {
+    // cria um código aleatório temporário para contas existentes, sem expor sua existência ao cliente.
+    async createPasswordReset(email: string) {
+      const user = await findByEmail(email);
+      if (!user) return null;
+      const token = randomHex(32);
+      const createdAt = now();
+      await db.insert(passwordResets).values({ id: await sha256Hex(token), userId: user.id, createdAt, expiresAt: new Date(createdAt.getTime() + 30 * 60_000) });
+      return { token, email: user.email };
+    },
+
+    // consome o código uma única vez e invalida as sessões após trocar a senha.
+    async resetPassword(token: string, password: string) {
+      const validPassword = passwordSchema.parse(password);
+      if (!/^[a-f0-9]{64}$/.test(token)) return false;
+      const id = await sha256Hex(token);
+      const passwordHash = await hashPassword(validPassword);
+      const [reset] = await db.delete(passwordResets).where(and(eq(passwordResets.id, id), gt(passwordResets.expiresAt, now()))).returning();
+      if (!reset) return false;
+      await db.batch([
+        db.update(users).set({ passwordHash, updatedAt: now() }).where(eq(users.id, reset.userId)),
+        db.delete(sessions).where(eq(sessions.userId, reset.userId)),
+        db.delete(passwordResets).where(eq(passwordResets.userId, reset.userId)),
+      ]);
+      return true;
+    },
     // cadastra a conta com a senha já em hash; o e-mail é único, então a restrição do banco decide corridas.
     async register(input: unknown) {
       const data = registrationSchema.parse(input);

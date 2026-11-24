@@ -172,14 +172,14 @@ describe("anotações", () => {
 });
 
 describe("avaliações e médias", () => {
-  it("calcula a média ponderada das avaliações da disciplina", () => {
+  it("calcula a média simples das avaliações da disciplina", () => {
     const base = withDiscipline();
     const { discipline } = base;
     let state = base.state;
     state = addAssessment(state, "aluno-1", discipline.id, { title: "Prova 1", grade: 8, weight: 2 }, t0);
     state = addAssessment(state, "aluno-1", discipline.id, { title: "Projeto", grade: 10, weight: 1 }, t0);
 
-    expect(disciplineAverage(state, "aluno-1", discipline.id)).toBe(8.67);
+    expect(disciplineAverage(state, "aluno-1", discipline.id)).toBe(9);
     expect(listAssessments(state, "aluno-1", discipline.id)).toHaveLength(2);
   });
 

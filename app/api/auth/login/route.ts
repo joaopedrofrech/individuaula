@@ -2,13 +2,17 @@ import { createSessionCookie, isSecureRequest } from "@/lib/session"
 import { assertSameOrigin, enforceRateLimit, handle, readJson } from "@/server/api"
 import { loginLimiter } from "@/server/rate-limit"
 import { getServices } from "@/server/services"
+import { verifyTurnstile } from "@/server/turnstile"
 
 export async function POST(request: Request) {
   // autentica o usuário e devolve a sessão em um cookie protegido.
   return handle("Não foi possível entrar.", async () => {
     assertSameOrigin(request)
     enforceRateLimit(request, loginLimiter)
-    const result = await getServices().auth.login(await readJson(request))
+    const input = await readJson(request)
+    const services = getServices()
+    await verifyTurnstile(services.turnstile, (input as { turnstileToken?: unknown })?.turnstileToken, "login", request)
+    const result = await services.auth.login(input)
     return Response.json({ user: result.user }, { headers: { "set-cookie": createSessionCookie({ token: result.token, expiresAt: result.expiresAt, secure: isSecureRequest(request) }) } })
   })
 }

@@ -6,6 +6,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://individuaula.tech"),
   title: "IndividuAula · seu espaço de estudos",
   description: "Uma plataforma simples para organizar disciplinas, anotações e desempenho.",
   icons: {

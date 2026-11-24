@@ -8,9 +8,10 @@ export const registrationSchema = z.object({
   name: z.string().trim().min(2, "Informe seu nome.").max(120),
   email,
   password,
+  turnstileToken: z.string().max(2048).optional(),
 });
 
-export const loginSchema = z.object({ email, password });
+export const loginSchema = z.object({ email, password, turnstileToken: z.string().max(2048).optional() });
 
 export const profileSchema = z.object({
   name: z.string().trim().min(2, "Informe seu nome.").max(120),
@@ -47,7 +48,7 @@ export const noteSchema = z.object({
 export const assessmentSchema = z.object({
   title: z.string().trim().min(1, "Informe o nome da avaliação.").max(160),
   grade: z.coerce.number().min(0, "A nota mínima é 0.").max(10, "A nota máxima é 10."),
-  weight: z.coerce.number().positive("O peso precisa ser maior que zero.").max(100),
+  weight: z.coerce.number().positive("O peso precisa ser maior que zero.").max(100).default(1),
 });
 
 // o cliente gera o id para atualizar a tela na hora; o servidor só aceita o formato esperado.
@@ -62,7 +63,7 @@ export const disciplineUpdateSchema = z.object(disciplineShape).partial();
 export const noteUpdateSchema = noteSchema.partial();
 // na API, `null` remove a imagem da anotação e omitir o campo a mantém.
 export const noteUpdateRequestSchema = noteSchema.partial().extend({ imageDataUrl: noteSchema.shape.imageDataUrl.unwrap().nullable().optional() });
-export const assessmentUpdateSchema = assessmentSchema.partial();
+export const assessmentUpdateSchema = assessmentSchema.extend({ weight: z.coerce.number().positive().max(100).optional() }).partial();
 
 export const contentSearchSchema = z.object({
   query: z.string().trim().min(1, "Informe um termo de busca.").max(200),

@@ -20,7 +20,7 @@ import com.getcapacitor.BridgeActivity;
 public class MainActivity extends BridgeActivity {
 
     private static final int BRAND_NAVY = Color.rgb(7, 23, 54);
-    private static final String APP_HOST = "app.individuaula.workers.dev";
+    private static final String APP_HOST = "individuaula.tech";
     private static final String OFFLINE_URL = "file:///android_asset/public/offline.html";
 
     @Override

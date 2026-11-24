@@ -34,6 +34,19 @@ const newNote = (cookie: string, disciplineId: string, body: object = { title: "
 const newAssessment = (cookie: string, disciplineId: string, body: object = { title: "Prova", grade: 8, weight: 1 }) => call(createAssessment, "POST", "/api/assessments", { cookie, body: { disciplineId, ...body } });
 
 describe("autenticação obrigatória", () => {
+  it("exige o desafio configurado antes de gravar uma disciplina", async () => {
+    ctx.services = { ...createTestServices(database.db), turnstile: { siteKey: "public", secret: "secret", hostnames: "app.example.com" } };
+    const missing = await newDiscipline(ana);
+    expect(missing.status).toBe(403);
+    const fetchMock = vi.fn(async () => Response.json({ success: true, action: "discipline", hostname: "app.example.com" }));
+    vi.stubGlobal("fetch", fetchMock);
+    try {
+      const valid = await newDiscipline(ana, { name: "Matemática", color: "blue", turnstileToken: "token" });
+      expect(valid.status).toBe(201);
+      expect(fetchMock).toHaveBeenCalledOnce();
+    } finally { vi.unstubAllGlobals(); }
+  });
+
   it("devolve 401 em todas as rotas de dados sem sessão", async () => {
     const responses = await Promise.all([
       call(loadData, "GET", "/api/data"),

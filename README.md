@@ -7,7 +7,7 @@ Em produção: [app.individuaula.workers.dev](https://app.individuaula.workers.d
 ## funcionalidades
 
 - cadastro, login, logout e edição de perfil, com sessão no servidor;
-- disciplinas com cor e ícone, anotações com editor e imagem de apoio, avaliações com média ponderada;
+- disciplinas com cor e ícone, anotações com editor e imagem de apoio, avaliações com média simples;
 - dashboard com média geral, disciplinas ativas e ritmo de estudos da semana;
 - pesquisa de conteúdos educacionais (YouTube Data API, feita no servidor) com rolagem infinita: mais vídeos carregam sozinhos conforme o aluno desce a lista;
 - tema claro e escuro, layout responsivo e identidade visual do colégio.
@@ -125,7 +125,7 @@ erDiagram
 | `sessions` | logins abertos (um por aparelho), com validade de 7 dias |
 | `disciplines` | matérias do aluno, com cor e ícone |
 | `notes` | anotações de uma disciplina (texto formatado e imagem opcional) |
-| `assessments` | provas e trabalhos, com nota e peso para a média ponderada |
+| `assessments` | provas e trabalhos com nota; o peso antigo fica guardado por compatibilidade e não entra na média |
 | `study_sessions` | minutos estudados por dia, que alimentam o gráfico semanal |
 
 ### decisões do modelo
@@ -201,7 +201,7 @@ pnpm exec wrangler d1 execute DB --remote --command "SELECT u.email, (SELECT cou
 
 ### evolução planejada
 
-- **confirmação de e-mail e recuperação de senha:** o fluxo chegou a ser implementado e testado, mas foi retirado até existir um domínio próprio para o envio de e-mails (Resend);
+- **confirmação de e-mail:** ainda depende de um fluxo próprio de verificação;
 - **login com Google**, como alternativa ao cadastro por senha;
 - **limite de tentativas global:** hoje cada instância do Worker conta as suas; o plano é usar as regras de Rate Limiting da Cloudflare;
 - **imagens das anotações no R2:** hoje vão no D1, que limita cada linha a 2 MB (por isso o limite de 700 KB por imagem);
@@ -294,7 +294,9 @@ O comando `android:build:release` usa a assinatura debug local como fallback par
 
 ### integrações externas
 
-Google Login, confirmação/recuperação por e-mail e Cloudflare Turnstile não são ativados automaticamente porque dependem de credenciais e domínios do ambiente final. O login tradicional e a proteção atual continuam funcionando sem essas chaves. Quando elas forem fornecidas, devem ser configuradas como secrets no Worker, nunca no código ou no APK.
+Google Login e confirmação de e-mail ainda não estão implementados. A recuperação de senha usa Resend. Quando configurado, o Turnstile protege autenticação, recuperação, perfil, disciplinas, anotações, avaliações e busca de conteúdos.
+
+Para configurar o Worker, informe `RESEND_API_KEY`, `RESEND_FROM` (remetente de domínio verificado), `APP_URL` (URL pública), `TURNSTILE_SITE_KEY`, `TURNSTILE_SECRET` e `TURNSTILE_HOSTNAMES` (domínios autorizados, separados por vírgulas). Configure a chave pública, o segredo e a lista de domínios do Turnstile juntos; sem nenhuma dessas variáveis a verificação fica desativada, e uma configuração parcial bloqueia os formulários protegidos. Aplique a migração `0002_password_resets.sql` no banco antes de publicar a recuperação de senha.
 
 ## segurança
 
@@ -307,6 +309,6 @@ Google Login, confirmação/recuperação por e-mail e Cloudflare Turnstile não
 
 ## limitações conhecidas
 
-- não há recuperação de senha por e-mail até existir um domínio para o envio;
+- a recuperação por e-mail depende de configuração válida do Resend e da migração do banco;
 - o e-mail da conta ainda não pode ser alterado;
 - o limite de tentativas vive na memória de cada instância do Worker; a proteção global fica a cargo de uma regra de Rate Limiting da Cloudflare.

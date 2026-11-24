@@ -53,7 +53,7 @@ describe("contratos de acessibilidade e validação dos formulários", () => {
     expect(screen.getByLabelText(/título/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/conteúdo/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/nota/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/peso/i)).toBeInTheDocument();
+    expect(screen.queryByLabelText(/peso/i)).not.toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: /salvar disciplina/i }));
     await user.click(screen.getByRole("button", { name: /salvar anotação/i }));

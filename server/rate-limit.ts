@@ -48,9 +48,11 @@ export function clientKey(request: Request) {
 export const loginLimiter = createRateLimiter({ limit: 10, windowMs: 60_000 });
 export const registerLimiter = createRateLimiter({ limit: 5, windowMs: 60_000 });
 export const searchLimiter = createRateLimiter({ limit: 30, windowMs: 60_000 });
+export const passwordResetLimiter = createRateLimiter({ limit: 5, windowMs: 60_000 });
 
 export function resetRateLimiters() {
   loginLimiter.reset();
   registerLimiter.reset();
   searchLimiter.reset();
+  passwordResetLimiter.reset();
 }

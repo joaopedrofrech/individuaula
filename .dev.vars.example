@@ -1,3 +1,9 @@
 # segredos usados só no `pnpm dev` e no `pnpm preview`; em produção use `wrangler secret put`.
 YOUTUBE_API_KEY=
+RESEND_API_KEY=
+RESEND_FROM=
+APP_URL=http://localhost:3000
+TURNSTILE_SITE_KEY=
+TURNSTILE_SECRET=
+TURNSTILE_HOSTNAMES=
 NEXTJS_ENV=development

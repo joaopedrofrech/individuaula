@@ -10,10 +10,11 @@ import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from "@/c
 import { Input } from "@/components/ui/input"
 import { Separator } from "@/components/ui/separator"
 import { cn } from "@/lib/utils"
+import { useTurnstile } from "@/components/auth/turnstile-field"
 
 type NoteFormProps = {
   initialValues?: Partial<NoteInput>
-  onSubmit: (input: NoteInput) => void | Promise<void>
+  onSubmit: (input: NoteInput & { turnstileToken?: string }) => void | Promise<void>
   onCancel?: () => void
   submitLabel?: string
 }
@@ -37,6 +38,7 @@ export function NoteForm({ initialValues, onSubmit, onCancel, submitLabel = "Sal
   const [values, setValues] = React.useState({ title: initialValues?.title ?? "", content: initialValues?.content ?? "", imageDataUrl: initialValues?.imageDataUrl })
   const [error, setError] = React.useState("")
   const [dragging, setDragging] = React.useState(false)
+  const challenge = useTurnstile("note")
 
   React.useEffect(() => {
     // carrega texto antigo ou formatado dentro do editor visual.
@@ -88,7 +90,7 @@ export function NoteForm({ initialValues, onSubmit, onCancel, submitLabel = "Sal
       return
     }
     setError("")
-    await onSubmit(parsed.data)
+    try { await onSubmit({ ...parsed.data, turnstileToken: challenge.token || undefined }) } finally { challenge.reset() }
   }
 
   return (
@@ -121,7 +123,8 @@ export function NoteForm({ initialValues, onSubmit, onCancel, submitLabel = "Sal
       </div>
 
       <FieldError>{error}</FieldError>
-      <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end"><Button type="submit" className="rounded-none">{submitLabel}</Button>{onCancel && <Button type="button" variant="outline" className="rounded-none" onClick={onCancel}>Cancelar</Button>}</div>
+      {challenge.field}
+      <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end"><Button type="submit" className="rounded-none" disabled={challenge.blocked}>{submitLabel}</Button>{onCancel && <Button type="button" variant="outline" className="rounded-none" onClick={onCancel}>Cancelar</Button>}</div>
     </form>
   )
 }

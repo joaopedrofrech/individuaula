@@ -14,6 +14,13 @@ describe("configuração de deploy na Cloudflare", () => {
     expect(config.name).toBe("app");
   });
 
+  it("configura os domínios personalizados individuaula.tech e www.individuaula.tech", () => {
+    expect(config.routes).toEqual([
+      { pattern: "individuaula.tech", custom_domain: true },
+      { pattern: "www.individuaula.tech", custom_domain: true },
+    ]);
+  });
+
   it("habilita a compatibilidade com Node exigida pelo OpenNext", () => {
     expect(config.compatibility_flags).toContain("nodejs_compat");
   });
@@ -26,7 +33,9 @@ describe("configuração de deploy na Cloudflare", () => {
 
   it("não guarda segredos no arquivo de configuração", () => {
     expect(JSON.stringify(config)).not.toMatch(/re_[A-Za-z0-9]{10,}|api[_-]?key["']?\s*:\s*["'][^"']+/i);
-    expect(config).not.toHaveProperty("vars");
+    expect(config.vars).not.toHaveProperty("RESEND_API_KEY");
+    expect(config.vars).not.toHaveProperty("TURNSTILE_SECRET");
+    expect(config.vars).not.toHaveProperty("YOUTUBE_API_KEY");
   });
 
   it("serve os arquivos estáticos pelo binding ASSETS", () => {

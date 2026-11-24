@@ -87,7 +87,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                           isActive={isActive}
                           tooltip={item.label}
                           render={<Link href={item.href} />}
-                          className={cn("h-11 rounded-none px-3 text-sidebar-foreground/75 hover:bg-sidebar-accent hover:text-sidebar-foreground", isActive && "bg-signal font-bold text-brand")}
+                          className={cn("h-11 rounded-none px-3 text-sidebar-foreground/75 hover:bg-sidebar-accent hover:text-sidebar-foreground", isActive && "font-bold data-active:bg-sidebar-accent data-active:text-white")}
                         >
                           <Icon data-icon="inline-start" />
                           <span>{item.label}</span>
@@ -107,7 +107,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                       isActive={pathname.startsWith("/perfil")}
                       tooltip="Meu perfil"
                       render={<Link href="/perfil" />}
-                      className="h-11 rounded-none px-3 text-sidebar-foreground/75 hover:bg-sidebar-accent hover:text-sidebar-foreground"
+                      className={cn("h-11 rounded-none px-3 text-sidebar-foreground/75 hover:bg-sidebar-accent hover:text-sidebar-foreground", pathname.startsWith("/perfil") && "font-bold data-active:bg-sidebar-accent data-active:text-white")}
                     >
                       <UserRoundIcon data-icon="inline-start" />
                       <span>Meu perfil</span>

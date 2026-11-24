@@ -1,5 +1,6 @@
 import { disciplineUpdateSchema } from "@/lib/validators"
-import { assertSameOrigin, handle, HttpError, readJson, requireUser } from "@/server/api"
+import { assertSameOrigin, handle, HttpError, requireUser } from "@/server/api"
+import { readTurnstileJson } from "@/server/turnstile"
 import { getServices } from "@/server/services"
 
 type Context = { params: Promise<{ id: string }> }
@@ -7,10 +8,10 @@ type Context = { params: Promise<{ id: string }> }
 export async function PATCH(request: Request, { params }: Context) {
   // atualiza só os campos enviados; outro aluno nunca encontra a disciplina.
   return handle("Não foi possível atualizar a disciplina.", async () => {
-    const { auth, study } = getServices()
+    const { auth, study, turnstile } = getServices()
     const user = await requireUser(request, auth)
     assertSameOrigin(request)
-    const data = disciplineUpdateSchema.parse(await readJson(request))
+    const data = disciplineUpdateSchema.parse(await readTurnstileJson(request, turnstile, "discipline"))
     const discipline = await study.updateDiscipline(user.id, (await params).id, data)
     if (!discipline) throw new HttpError(404, "Disciplina não encontrada.")
     return Response.json(discipline)

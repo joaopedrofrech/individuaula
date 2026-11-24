@@ -80,7 +80,7 @@ test.describe("UC03, UC04, UC05 e UC06", () => {
     await page.getByRole("button", { name: /adicionar avaliação/i }).click();
     await page.getByLabel(/nome da avaliação|título/i).fill("Prova 1");
     await page.getByRole("spinbutton", { name: "Nota" }).fill("8");
-    await page.getByRole("spinbutton", { name: "Peso" }).fill("2");
+    await expect(page.getByRole("spinbutton", { name: "Peso" })).toHaveCount(0);
     await page.getByRole("button", { name: /salvar avaliação/i }).click();
     await expect(page.getByText("Prova 1")).toBeVisible();
     await expect(page.getByText("média atual")).toBeVisible();
